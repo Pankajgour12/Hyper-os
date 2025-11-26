@@ -1,6 +1,6 @@
 /**
- * HYPER-OS CONTROLLER
- * Focus: Stability, Smoothness, and Persistence.
+ * HYPER-OS ULTIMATE CONTROLLER
+ * Features: Smart Tags, Search, Persistence, Confetti
  */
 
 const App = {
@@ -8,163 +8,196 @@ const App = {
 
     init() {
         this.loadTasks();
-        this.startClock();
-        this.setupEventListeners();
         this.render();
+        this.setupEventListeners();
+        console.log("Hyper-OS 2.0: Online");
     },
 
-    // --- DATA MANAGEMENT ---
+    // --- DATA ---
     loadTasks() {
-        const saved = localStorage.getItem('hyper-os-tasks');
-        if (saved) {
-            this.tasks = JSON.parse(saved);
-        } else {
-            // Initial Seed Data
-            this.tasks = [
-                { id: 1, text: 'Review System Architecture', status: 'todo', tag: 'System' },
-                { id: 2, text: 'Design High-Fidelity Mockups', status: 'progress', tag: 'Design' }
-            ];
-        }
+        const saved = localStorage.getItem('hyperOS_v2');
+        this.tasks = saved ? JSON.parse(saved) : [
+            { id: 1, text: 'Review new UI Components', tag: 'design', status: 'todo' },
+            { id: 2, text: 'Fix navigation bug', tag: 'urgent', status: 'progress' }
+        ];
     },
 
     saveTasks() {
-        localStorage.setItem('hyper-os-tasks', JSON.stringify(this.tasks));
-        this.render();
+        localStorage.setItem('hyperOS_v2', JSON.stringify(this.tasks));
+        this.render(); // Re-render to reflect changes
     },
 
-    addTask(text) {
+    // --- SMART ADD ---
+    addTask(rawText) {
+        // Smart Tag Extraction logic
+        let tag = 'general';
+        let cleanText = rawText;
+
+        if (rawText.includes('#urgent')) { tag = 'urgent'; cleanText = rawText.replace('#urgent', ''); }
+        else if (rawText.includes('#design')) { tag = 'design'; cleanText = rawText.replace('#design', ''); }
+        else if (rawText.includes('#dev')) { tag = 'dev'; cleanText = rawText.replace('#dev', ''); }
+
         const newTask = {
             id: Date.now(),
-            text: text,
+            text: cleanText.trim(),
+            tag: tag,
             status: 'todo',
-            tag: Math.random() > 0.5 ? 'Design' : 'System' // Auto-tag simulation
+            timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
         };
+
         this.tasks.push(newTask);
         this.saveTasks();
         this.playSfx('pop');
     },
 
-    updateTaskStatus(id, newStatus) {
+    deleteTask(id) {
+        this.tasks = this.tasks.filter(t => t.id != id);
+        this.saveTasks();
+        this.playSfx('delete');
+    },
+
+    updateStatus(id, newStatus) {
         const task = this.tasks.find(t => t.id == id);
-        if (task && task.status !== newStatus) {
+        if(task && task.status !== newStatus) {
             task.status = newStatus;
             this.saveTasks();
             this.playSfx('whoosh');
+            
+            // 🎉 FEATURE: Confetti Blast on Done
+            if(newStatus === 'done') this.triggerConfetti();
         }
     },
 
-    // --- RENDERING ---
-    render() {
-        // Clear columns
+    // --- RENDER ---
+    render(filterText = '') {
         ['todo', 'progress', 'done'].forEach(status => {
-            document.getElementById(`stack-${status}`).innerHTML = '';
-            // Update counts
-            const count = this.tasks.filter(t => t.status === status).length;
-            document.querySelector(`#zone-${status} .count`).innerText = count;
-        });
-
-        // Create Cards
-        this.tasks.forEach(task => {
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.setAttribute('draggable', true);
-            card.setAttribute('data-id', task.id);
+            const stack = document.getElementById(`stack-${status}`);
+            stack.innerHTML = '';
             
-            // Visual Tag Color
-            const tagClass = task.tag === 'Design' ? 'tag-purple' : 'tag-blue';
+            // Filter tasks based on search
+            const filteredTasks = this.tasks.filter(t => 
+                t.status === status && t.text.toLowerCase().includes(filterText.toLowerCase())
+            );
 
-            card.innerHTML = `
-                <span class="card-tag ${tagClass}">${task.tag}</span>
-                <p>${task.text}</p>
-                <div class="card-meta">
-                    <span>#${task.id.toString().slice(-4)}</span>
-                    <span>Now</span>
-                </div>
-            `;
+            // Update Counts
+            document.querySelector(`#zone-${status} .count`).innerText = filteredTasks.length;
 
-            this.attachDragEvents(card);
-            document.getElementById(`stack-${task.status}`).appendChild(card);
+            filteredTasks.forEach(task => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.draggable = true;
+                card.dataset.id = task.id;
+
+                card.innerHTML = `
+                    <span class="card-tag tag-${task.tag}">${task.tag}</span>
+                    <p>${task.text}</p>
+                    <div class="card-meta">
+                        <span>#${task.id.toString().slice(-4)}</span>
+                        <span>${task.timestamp}</span>
+                    </div>
+                `;
+
+                // Drag Events
+                card.addEventListener('dragstart', e => {
+                    e.dataTransfer.setData('text/plain', task.id);
+                    setTimeout(() => card.classList.add('dragging'), 0);
+                });
+                card.addEventListener('dragend', () => card.classList.remove('dragging'));
+
+                // 🗑️ FEATURE: Double Click to Delete
+                card.addEventListener('dblclick', () => {
+                    if(confirm("Delete this task?")) this.deleteTask(task.id);
+                });
+
+                stack.appendChild(card);
+            });
         });
     },
 
-    // --- INTERACTIONS ---
+    // --- EVENTS ---
     setupEventListeners() {
-        // Input Logic
+        // Add Task Input
         const input = document.getElementById('task-input');
-        input.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && input.value.trim() !== '') {
-                this.addTask(input.value.trim());
+        const addBtn = document.getElementById('add-btn');
+
+        const handleAdd = () => {
+            if(input.value.trim()) {
+                this.addTask(input.value);
                 input.value = '';
             }
-        });
+        };
 
-        // Drop Zone Logic
+        input.addEventListener('keypress', e => e.key === 'Enter' && handleAdd());
+        addBtn.onclick = handleAdd;
+
+        // Drop Zones
         ['todo', 'progress', 'done'].forEach(status => {
             const zone = document.getElementById(`zone-${status}`);
-            
-            zone.addEventListener('dragover', (e) => {
-                e.preventDefault(); // Essential for dropping
+            zone.addEventListener('dragover', e => {
+                e.preventDefault();
                 zone.style.borderColor = 'var(--accent)';
             });
-
-            zone.addEventListener('dragleave', () => {
-                zone.style.borderColor = 'var(--glass-border)';
-            });
-
-            zone.addEventListener('drop', (e) => {
+            zone.addEventListener('dragleave', () => zone.style.borderColor = 'var(--border)');
+            zone.addEventListener('drop', e => {
                 e.preventDefault();
-                zone.style.borderColor = 'var(--glass-border)';
+                zone.style.borderColor = 'var(--border)';
                 const id = e.dataTransfer.getData('text/plain');
-                this.updateTaskStatus(id, status);
+                this.updateStatus(id, status);
             });
         });
+
+        // Search Bar Logic
+        const searchInput = document.getElementById('global-search');
+        searchInput.addEventListener('input', (e) => this.render(e.target.value));
+
+        // Keyboard Shortcuts
+        document.addEventListener('keydown', e => {
+            if (e.ctrlKey && e.key === 'k') {
+                e.preventDefault();
+                this.toggleSearch();
+            }
+            if (e.key === 'Escape') {
+                document.getElementById('search-overlay').classList.remove('active');
+            }
+        });
     },
 
-    attachDragEvents(card) {
-        card.addEventListener('dragstart', (e) => {
-            e.dataTransfer.setData('text/plain', card.getAttribute('data-id'));
-            setTimeout(() => card.classList.add('dragging'), 0);
-        });
-
-        card.addEventListener('dragend', () => {
-            card.classList.remove('dragging');
-        });
+    // --- UTILS ---
+    toggleSearch() {
+        const overlay = document.getElementById('search-overlay');
+        overlay.classList.toggle('active');
+        if(overlay.classList.contains('active')) document.getElementById('global-search').focus();
     },
 
-    // --- UTILITIES ---
-    startClock() {
-        const update = () => {
-            const now = new Date();
-            document.getElementById('clock').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        };
-        setInterval(update, 1000);
-        update();
+    triggerConfetti() {
+        confetti({
+            particleCount: 100, spread: 70, origin: { y: 0.6 },
+            colors: ['#6366f1', '#10b981', '#f472b6']
+        });
     },
 
     playSfx(type) {
-        // Simple Audio Feedback Generator
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-        
         osc.connect(gain);
         gain.connect(ctx.destination);
 
-        if (type === 'pop') {
+        if(type === 'pop') {
             osc.frequency.setValueAtTime(600, ctx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
-            osc.start();
-            osc.stop(ctx.currentTime + 0.1);
-        } else if (type === 'whoosh') {
+        } else if (type === 'delete') {
+            osc.frequency.setValueAtTime(150, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+        } else {
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(200, ctx.currentTime);
-            osc.frequency.linearRampToValueAtTime(400, ctx.currentTime + 0.2);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-            osc.start();
-            osc.stop(ctx.currentTime + 0.3);
+            osc.frequency.linearRampToValueAtTime(400, ctx.currentTime + 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
         }
+        osc.start();
+        osc.stop(ctx.currentTime + 0.2);
     }
 };
 
-// Boot OS
 window.onload = () => App.init();

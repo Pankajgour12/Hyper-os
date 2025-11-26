@@ -4,13 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HYPER-OS | Workspace</title>
+    <title>HYPER-OS | Ultimate</title>
     <link rel="stylesheet" href="style.css">
 
     <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Draggable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 
 <body>
@@ -18,13 +19,24 @@
     <div class="wallpaper"></div>
     <div class="noise-overlay"></div>
 
+    <div class="search-overlay" id="search-overlay">
+        <div class="search-box">
+            <i class="ri-search-line"></i>
+            <input type="text" id="global-search" placeholder="Search tasks..." autocomplete="off">
+            <span class="esc-hint">ESC</span>
+        </div>
+    </div>
+
     <div id="os-interface">
 
         <header class="status-bar">
-            <div class="logo">HYPER<span>OS</span></div>
-            <div class="clock" id="clock">12:00 PM</div>
-            <div class="user-pill">
-                <span class="status-dot"></span> Admin
+            <div class="logo">HYPER<span>OS</span> <span class="version">2.0</span></div>
+            <div class="actions">
+                <button class="icon-btn" onclick="App.toggleSearch()" title="Search (Ctrl+K)"><i
+                        class="ri-search-2-line"></i></button>
+                <div class="user-pill">
+                    <span class="status-dot"></span> Admin
+                </div>
             </div>
         </header>
 
@@ -32,8 +44,10 @@
 
             <div class="zone" id="zone-todo">
                 <div class="zone-head">
-                    <div class="icon-box"><i class="ri-lightbulb-flash-line"></i></div>
-                    <h3>Backlog</h3>
+                    <div class="head-left">
+                        <div class="icon-box"><i class="ri-stack-line"></i></div>
+                        <h3>Backlog</h3>
+                    </div>
                     <span class="count">0</span>
                 </div>
                 <div class="card-stack" id="stack-todo"></div>
@@ -41,8 +55,10 @@
 
             <div class="zone" id="zone-progress">
                 <div class="zone-head">
-                    <div class="icon-box active"><i class="ri-loader-4-line"></i></div>
-                    <h3>In Focus</h3>
+                    <div class="head-left">
+                        <div class="icon-box active"><i class="ri-loader-2-line"></i></div>
+                        <h3>In Flow</h3>
+                    </div>
                     <span class="count">0</span>
                 </div>
                 <div class="card-stack" id="stack-progress"></div>
@@ -50,8 +66,10 @@
 
             <div class="zone" id="zone-done">
                 <div class="zone-head">
-                    <div class="icon-box success"><i class="ri-check-double-line"></i></div>
-                    <h3>Shipped</h3>
+                    <div class="head-left">
+                        <div class="icon-box success"><i class="ri-trophy-line"></i></div>
+                        <h3>Shipped</h3>
+                    </div>
                     <span class="count">0</span>
                 </div>
                 <div class="card-stack" id="stack-done"></div>
@@ -61,10 +79,14 @@
 
         <div class="dock-wrapper">
             <div class="spotlight-bar">
-                <i class="ri-command-line"></i>
-                <input type="text" id="task-input" placeholder="Type command or new task..." autocomplete="off">
-                <div class="key-hint">ENTER</div>
+                <div class="input-wrapper">
+                    <i class="ri-add-circle-line"></i>
+                    <input type="text" id="task-input" placeholder="Type task... (Use #urgent, #design, #dev)"
+                        autocomplete="off">
+                </div>
+                <button id="add-btn" class="send-btn"><i class="ri-arrow-up-line"></i></button>
             </div>
+            <div class="hint-text">Double-click a card to delete</div>
         </div>
 
     </div>

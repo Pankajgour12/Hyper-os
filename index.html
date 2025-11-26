@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HYPER-OS | Workspace</title>
+    <link rel="stylesheet" href="style.css">
+
+    <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Draggable.min.js"></script>
+</head>
+
+<body>
+
+    <div class="wallpaper"></div>
+    <div class="noise-overlay"></div>
+
+    <div id="os-interface">
+
+        <header class="status-bar">
+            <div class="logo">HYPER<span>OS</span></div>
+            <div class="clock" id="clock">12:00 PM</div>
+            <div class="user-pill">
+                <span class="status-dot"></span> Admin
+            </div>
+        </header>
+
+        <main class="grid-container">
+
+            <div class="zone" id="zone-todo">
+                <div class="zone-head">
+                    <div class="icon-box"><i class="ri-lightbulb-flash-line"></i></div>
+                    <h3>Backlog</h3>
+                    <span class="count">0</span>
+                </div>
+                <div class="card-stack" id="stack-todo"></div>
+            </div>
+
+            <div class="zone" id="zone-progress">
+                <div class="zone-head">
+                    <div class="icon-box active"><i class="ri-loader-4-line"></i></div>
+                    <h3>In Focus</h3>
+                    <span class="count">0</span>
+                </div>
+                <div class="card-stack" id="stack-progress"></div>
+            </div>
+
+            <div class="zone" id="zone-done">
+                <div class="zone-head">
+                    <div class="icon-box success"><i class="ri-check-double-line"></i></div>
+                    <h3>Shipped</h3>
+                    <span class="count">0</span>
+                </div>
+                <div class="card-stack" id="stack-done"></div>
+            </div>
+
+        </main>
+
+        <div class="dock-wrapper">
+            <div class="spotlight-bar">
+                <i class="ri-command-line"></i>
+                <input type="text" id="task-input" placeholder="Type command or new task..." autocomplete="off">
+                <div class="key-hint">ENTER</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

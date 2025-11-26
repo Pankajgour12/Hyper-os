@@ -3,8 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HYPER-OS | Ultimate</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HYPER-OS</title>
     <link rel="stylesheet" href="style.css">
 
     <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
@@ -19,74 +19,71 @@
     <div class="wallpaper"></div>
     <div class="noise-overlay"></div>
 
-    <div class="search-overlay" id="search-overlay">
-        <div class="search-box">
-            <i class="ri-search-line"></i>
-            <input type="text" id="global-search" placeholder="Search tasks..." autocomplete="off">
-            <span class="esc-hint">ESC</span>
-        </div>
-    </div>
-
     <div id="os-interface">
 
         <header class="status-bar">
-            <div class="logo">HYPER<span>OS</span> <span class="version">2.0</span></div>
-            <div class="actions">
-                <button class="icon-btn" onclick="App.toggleSearch()" title="Search (Ctrl+K)"><i
-                        class="ri-search-2-line"></i></button>
-                <div class="user-pill">
-                    <span class="status-dot"></span> Admin
+            <div class="logo">HYPER<span>OS</span></div>
+
+            <div class="settings-island">
+                <div class="theme-toggles">
+                    <button class="theme-btn active" onclick="App.setTheme('dark')" title="Deep Dark">🌑</button>
+                    <button class="theme-btn" onclick="App.setTheme('light')" title="Polar White">☀️</button>
+                    <button class="theme-btn" onclick="App.setTheme('cyber')" title="Cyberpunk">👾</button>
                 </div>
+                <div class="divider"></div>
+                <button class="icon-btn" onclick="App.clearDone()" title="Clear Completed"><i
+                        class="ri-delete-bin-line"></i></button>
             </div>
         </header>
 
-        <main class="grid-container">
+        <main class="grid-wrapper">
+            <div class="grid-container">
 
-            <div class="zone" id="zone-todo">
-                <div class="zone-head">
-                    <div class="head-left">
-                        <div class="icon-box"><i class="ri-stack-line"></i></div>
-                        <h3>Backlog</h3>
+                <div class="zone" id="zone-todo">
+                    <div class="zone-head">
+                        <div class="head-left">
+                            <div class="icon-box"><i class="ri-sticky-note-line"></i></div>
+                            <h3>To Do</h3>
+                        </div>
+                        <span class="count">0</span>
                     </div>
-                    <span class="count">0</span>
-                </div>
-                <div class="card-stack" id="stack-todo"></div>
-            </div>
-
-            <div class="zone" id="zone-progress">
-                <div class="zone-head">
-                    <div class="head-left">
-                        <div class="icon-box active"><i class="ri-loader-2-line"></i></div>
-                        <h3>In Flow</h3>
+                    <div class="card-stack" id="stack-todo">
                     </div>
-                    <span class="count">0</span>
                 </div>
-                <div class="card-stack" id="stack-progress"></div>
-            </div>
 
-            <div class="zone" id="zone-done">
-                <div class="zone-head">
-                    <div class="head-left">
-                        <div class="icon-box success"><i class="ri-trophy-line"></i></div>
-                        <h3>Shipped</h3>
+                <div class="zone" id="zone-progress">
+                    <div class="zone-head">
+                        <div class="head-left">
+                            <div class="icon-box active"><i class="ri-flashlight-line"></i></div>
+                            <h3>In Progress</h3>
+                        </div>
+                        <span class="count">0</span>
                     </div>
-                    <span class="count">0</span>
+                    <div class="card-stack" id="stack-progress"></div>
                 </div>
-                <div class="card-stack" id="stack-done"></div>
-            </div>
 
+                <div class="zone" id="zone-done">
+                    <div class="zone-head">
+                        <div class="head-left">
+                            <div class="icon-box success"><i class="ri-checkbox-circle-line"></i></div>
+                            <h3>Done</h3>
+                        </div>
+                        <span class="count">0</span>
+                    </div>
+                    <div class="card-stack" id="stack-done"></div>
+                </div>
+
+            </div>
         </main>
 
         <div class="dock-wrapper">
             <div class="spotlight-bar">
                 <div class="input-wrapper">
-                    <i class="ri-add-circle-line"></i>
-                    <input type="text" id="task-input" placeholder="Type task... (Use #urgent, #design, #dev)"
-                        autocomplete="off">
+                    <i class="ri-add-line"></i>
+                    <input type="text" id="task-input" placeholder="New Task... (#urg, #bug)" autocomplete="off">
                 </div>
                 <button id="add-btn" class="send-btn"><i class="ri-arrow-up-line"></i></button>
             </div>
-            <div class="hint-text">Double-click a card to delete</div>
         </div>
 
     </div>

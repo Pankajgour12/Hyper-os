@@ -1,6 +1,5 @@
 /**
- * HYPER-OS ULTIMATE CONTROLLER
- * Features: Smart Tags, Search, Persistence, Confetti
+ * HYPER-OS 3.0 LOGIC
  */
 
 const App = {
@@ -8,41 +7,53 @@ const App = {
 
     init() {
         this.loadTasks();
+        this.loadTheme(); // Load saved theme
         this.render();
-        this.setupEventListeners();
-        console.log("Hyper-OS 2.0: Online");
+        this.setupEvents();
+    },
+
+    // --- THEME ENGINE ---
+    setTheme(themeName) {
+        document.body.setAttribute('data-theme', themeName);
+        localStorage.setItem('hyperOS_theme', themeName);
+        
+        // Update Buttons Visual
+        document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`.theme-btn[onclick="App.setTheme('${themeName}')"]`).classList.add('active');
+    },
+
+    loadTheme() {
+        const savedTheme = localStorage.getItem('hyperOS_theme') || 'dark';
+        this.setTheme(savedTheme);
     },
 
     // --- DATA ---
     loadTasks() {
-        const saved = localStorage.getItem('hyperOS_v2');
+        const saved = localStorage.getItem('hyperOS_v3_tasks');
         this.tasks = saved ? JSON.parse(saved) : [
-            { id: 1, text: 'Review new UI Components', tag: 'design', status: 'todo' },
-            { id: 2, text: 'Fix navigation bug', tag: 'urgent', status: 'progress' }
+            { id: 1, text: 'Check responsive layout', tag: 'bug', status: 'todo' },
+            { id: 2, text: 'Design new theme icons', tag: 'urg', status: 'progress' }
         ];
     },
 
     saveTasks() {
-        localStorage.setItem('hyperOS_v2', JSON.stringify(this.tasks));
-        this.render(); // Re-render to reflect changes
+        localStorage.setItem('hyperOS_v3_tasks', JSON.stringify(this.tasks));
+        this.render();
     },
 
-    // --- SMART ADD ---
-    addTask(rawText) {
-        // Smart Tag Extraction logic
-        let tag = 'general';
-        let cleanText = rawText;
+    // --- ACTIONS ---
+    addTask(text) {
+        let tag = 'gen';
+        let cleanText = text;
 
-        if (rawText.includes('#urgent')) { tag = 'urgent'; cleanText = rawText.replace('#urgent', ''); }
-        else if (rawText.includes('#design')) { tag = 'design'; cleanText = rawText.replace('#design', ''); }
-        else if (rawText.includes('#dev')) { tag = 'dev'; cleanText = rawText.replace('#dev', ''); }
+        if (text.includes('#urg')) { tag = 'urg'; cleanText = text.replace('#urg', ''); }
+        else if (text.includes('#bug')) { tag = 'bug'; cleanText = text.replace('#bug', ''); }
 
         const newTask = {
             id: Date.now(),
             text: cleanText.trim(),
             tag: tag,
-            status: 'todo',
-            timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+            status: 'todo'
         };
 
         this.tasks.push(newTask);
@@ -50,63 +61,59 @@ const App = {
         this.playSfx('pop');
     },
 
-    deleteTask(id) {
-        this.tasks = this.tasks.filter(t => t.id != id);
-        this.saveTasks();
-        this.playSfx('delete');
-    },
-
     updateStatus(id, newStatus) {
         const task = this.tasks.find(t => t.id == id);
-        if(task && task.status !== newStatus) {
+        if (task && task.status !== newStatus) {
             task.status = newStatus;
             this.saveTasks();
-            this.playSfx('whoosh');
-            
-            // 🎉 FEATURE: Confetti Blast on Done
+            this.playSfx('swish');
             if(newStatus === 'done') this.triggerConfetti();
         }
     },
 
+    clearDone() {
+        if(confirm("Clear all completed tasks?")) {
+            this.tasks = this.tasks.filter(t => t.status !== 'done');
+            this.saveTasks();
+            this.playSfx('trash');
+        }
+    },
+
     // --- RENDER ---
-    render(filterText = '') {
+    render() {
         ['todo', 'progress', 'done'].forEach(status => {
             const stack = document.getElementById(`stack-${status}`);
             stack.innerHTML = '';
             
-            // Filter tasks based on search
-            const filteredTasks = this.tasks.filter(t => 
-                t.status === status && t.text.toLowerCase().includes(filterText.toLowerCase())
-            );
+            const filtered = this.tasks.filter(t => t.status === status);
+            document.querySelector(`#zone-${status} .count`).innerText = filtered.length;
 
-            // Update Counts
-            document.querySelector(`#zone-${status} .count`).innerText = filteredTasks.length;
-
-            filteredTasks.forEach(task => {
+            filtered.forEach(task => {
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.draggable = true;
-                card.dataset.id = task.id;
-
+                
+                // Tag Display
+                let tagName = task.tag === 'urg' ? 'Urgent' : (task.tag === 'bug' ? 'Bug' : 'General');
+                
                 card.innerHTML = `
-                    <span class="card-tag tag-${task.tag}">${task.tag}</span>
+                    <span class="card-tag tag-${task.tag}">${tagName}</span>
                     <p>${task.text}</p>
-                    <div class="card-meta">
-                        <span>#${task.id.toString().slice(-4)}</span>
-                        <span>${task.timestamp}</span>
-                    </div>
                 `;
 
-                // Drag Events
+                // Events
                 card.addEventListener('dragstart', e => {
                     e.dataTransfer.setData('text/plain', task.id);
-                    setTimeout(() => card.classList.add('dragging'), 0);
+                    card.style.opacity = '0.5';
                 });
-                card.addEventListener('dragend', () => card.classList.remove('dragging'));
-
-                // 🗑️ FEATURE: Double Click to Delete
+                card.addEventListener('dragend', () => card.style.opacity = '1');
+                
+                // Double Click Delete
                 card.addEventListener('dblclick', () => {
-                    if(confirm("Delete this task?")) this.deleteTask(task.id);
+                     if(confirm('Delete?')) {
+                         this.tasks = this.tasks.filter(t => t.id !== task.id);
+                         this.saveTasks();
+                     }
                 });
 
                 stack.appendChild(card);
@@ -115,22 +122,16 @@ const App = {
     },
 
     // --- EVENTS ---
-    setupEventListeners() {
-        // Add Task Input
+    setupEvents() {
+        // Input
         const input = document.getElementById('task-input');
-        const addBtn = document.getElementById('add-btn');
+        const btn = document.getElementById('add-btn');
+        const add = () => { if(input.value.trim()){ this.addTask(input.value); input.value=''; }};
+        
+        input.addEventListener('keypress', e => e.key === 'Enter' && add());
+        btn.onclick = add;
 
-        const handleAdd = () => {
-            if(input.value.trim()) {
-                this.addTask(input.value);
-                input.value = '';
-            }
-        };
-
-        input.addEventListener('keypress', e => e.key === 'Enter' && handleAdd());
-        addBtn.onclick = handleAdd;
-
-        // Drop Zones
+        // Drop Logic
         ['todo', 'progress', 'done'].forEach(status => {
             const zone = document.getElementById(`zone-${status}`);
             zone.addEventListener('dragover', e => {
@@ -145,58 +146,27 @@ const App = {
                 this.updateStatus(id, status);
             });
         });
-
-        // Search Bar Logic
-        const searchInput = document.getElementById('global-search');
-        searchInput.addEventListener('input', (e) => this.render(e.target.value));
-
-        // Keyboard Shortcuts
-        document.addEventListener('keydown', e => {
-            if (e.ctrlKey && e.key === 'k') {
-                e.preventDefault();
-                this.toggleSearch();
-            }
-            if (e.key === 'Escape') {
-                document.getElementById('search-overlay').classList.remove('active');
-            }
-        });
     },
 
-    // --- UTILS ---
-    toggleSearch() {
-        const overlay = document.getElementById('search-overlay');
-        overlay.classList.toggle('active');
-        if(overlay.classList.contains('active')) document.getElementById('global-search').focus();
-    },
-
+    // --- FX ---
     triggerConfetti() {
-        confetti({
-            particleCount: 100, spread: 70, origin: { y: 0.6 },
-            colors: ['#6366f1', '#10b981', '#f472b6']
-        });
+        confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 }, colors: ['#6366f1', '#22c55e'] });
     },
 
     playSfx(type) {
+        // Simple SFX implementation
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.connect(gain);
         gain.connect(ctx.destination);
-
-        if(type === 'pop') {
-            osc.frequency.setValueAtTime(600, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
-        } else if (type === 'delete') {
-            osc.frequency.setValueAtTime(150, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
-        } else {
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(200, ctx.currentTime);
-            osc.frequency.linearRampToValueAtTime(400, ctx.currentTime + 0.1);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
-        }
+        
+        if(type==='pop') osc.frequency.setValueAtTime(600, ctx.currentTime);
+        if(type==='swish') osc.frequency.setValueAtTime(300, ctx.currentTime);
+        
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
         osc.start();
-        osc.stop(ctx.currentTime + 0.2);
+        osc.stop(ctx.currentTime + 0.1);
     }
 };
 
